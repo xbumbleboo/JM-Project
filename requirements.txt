@@ -1,0 +1,13 @@
+# Đã kiểm tái lập bộ dữ liệu tham chiếu với Python 3.13.18 (Google Colab, 13/11/2026).
+# Ba thư viện dưới đây quyết định dữ liệu sinh ra: giữ đúng phiên bản.
+# Đừng nâng Faker: cách nó dùng số ngẫu nhiên có thể đổi giữa các phiên bản.
+faker==40.54.0
+numpy==2.4.6
+pandas==2.2.3
+
+# Phân tích, mô hình và nạp BigQuery
+scipy>=1.13
+statsmodels>=0.14
+pyarrow>=15
+google-cloud-bigquery>=3.20
+db-dtypes>=1.2

@@ -1,0 +1,309 @@
+Table depots {
+  id int [pk, note: '1001–1032: 29 cửa hàng + 3 kho', not null]
+  code varchar [unique, note: 'VD STORE_HN_01; nhiều bảng nối qua cột này']
+  name varchar
+  city_name varchar
+  store_format varchar [note: 'TTTM / Mặt phố / Kho']
+  location_type varchar [note: 'Trung tâm / Ven đô / Kho']
+}
+
+Table nhanh_categories {
+  id int [pk, note: '101-107 (7 dòng hàng)']
+  code varchar
+  name varchar
+}
+
+Table nhanh_internal_categories {
+  id int [pk, note: '201-220 (20 BST)']
+  code varchar
+  name varchar
+}
+
+Table nhanh_products_full {
+  id int [pk]
+  code varchar [unique]
+  name varchar 
+  category_id int [not null]
+  internal_category_id int [not null]
+  status varchar [note: 'Active / Inactive'] 
+  "prices.retail" int [note: 'Giá niêm yết là giá năm 2024, chưa tính tăng giá 9%/năm']
+  "prices.avg_cost" int [note: 'giá vốn']
+}
+
+Table nhanh_customers_full {
+  id int [pk, note: '1, 2, 3 = tài khoản dùng chung (PHÒNG NHÂN SỰ, KHÁCH LẺ, KHÁCH NƯỚC NGOÀI); khách thật từ 100001', not null]
+  name varchar 
+  mobile varchar 
+  membership_tier varchar 
+  points int 
+  startedDate date
+  totalAmount int 
+  frequencyBought int 
+  daysNotBought int 
+}
+
+Table t_customer_tier_final {
+  customer_id int [pk]
+  Potential_Tier varchar 
+  Activity_Status varchar 
+  Final_Tier varchar
+}
+
+Table employees {
+  emp_id varchar [pk]
+  emp_name varchar 
+  store_id varchar [not null]
+  role varchar 
+  is_active boolean
+}
+
+Table work_schedule {
+  emp_id varchar 
+  store_id varchar [not null]
+  work_date date
+  shift_name varchar 
+  planned_hours float 
+  actual_hours float 
+  indexes {
+    (emp_id, work_date) [pk]
+  } 
+}
+
+Ref: nhanh_products_full.category_id > nhanh_categories.id
+
+Ref: nhanh_products_full.internal_category_id > nhanh_internal_categories.id
+
+Ref: nhanh_customers_full.id - t_customer_tier_final.customer_id
+
+Ref: employees.store_id > depots.code
+
+Ref: work_schedule.emp_id > employees.emp_id
+
+Ref: work_schedule.store_id > depots.code
+
+Table bills_raw {
+  bill_id int [pk]
+  bill_type int [note: '2 = Phiếu bán, 1 = phiếu trả']
+  bill_date date 
+  depot_id int [not null]
+  customer_id int [not null]
+  sale_user_id varchar [not null]
+  related_type int [note: '6 = phiếu có hóa đơn gốc, 0 = không có']
+  related_bill_id int [note: 'chỉ có ở phiếu trả: trỏ về hóa đơn gốc', unique]
+  related_parent_id int [note: 'chỉ có hóa đơn đổi: trỏ về phiếu trả', unique]
+  payment_amount int 
+  payment_points int 
+  payment_return_fee int 
+}
+
+Table bills_raw_products {
+  bill_id int [not null]
+  code varchar [not null]
+  quantity int 
+  price int 
+  discount int 
+  amount int
+  note: 'mảng lồng trong bills_raw, không phải bảng thật'
+}
+
+Ref: bills_raw.depot_id > depots.id
+
+Ref: bills_raw.customer_id > nhanh_customers_full.id
+
+Ref: bills_raw.sale_user_id > employees.emp_id
+
+Ref: bills_raw_products.code > nhanh_products_full.code
+
+Ref: bills_raw_products.bill_id > bills_raw.bill_id
+
+Ref: bills_raw.related_bill_id -? bills_raw.bill_id
+
+Ref: bills_raw.related_parent_id -? bills_raw.bill_id
+
+Table orders_raw {
+  order_id int [note: 'không duy nhất: dòng trả hàng dùng lại order_id gốc', not null]
+  order_type varchar [note: 'giao hàng tận nhà = đơn gốc, khách trả lại hàng = dòng trả']
+  status varchar [note: '8 giá trị: Thành công, Khách hủy, Hệ thống hủy, Hết hàng, Thất bại, Đang chuyển hoàn, Đã chuyển hoàn, Xác nhận hoàn']
+  sale_channel varchar [note: '7 sàn']
+  created_at timestamp 
+  depot_id int [note: 'cửa hàng xử lý đơn', not null]
+  customer_id int [note: 'không bao giờ là id 1, 2, 3', not null]
+  reason int [note: '1–26 = lý do hủy (chỉ ở Khách hủy, Hệ thống hủy); 31–35 = lý do trả (chỉ ở dòng Khách trả lại hàng); 0 = không có. Không lọc reason != 0 để lấy một loại: sẽ lẫn cả hai']
+  cod_amount int [note: 'dòng trả mang số âm']
+  business_payment int [note: 'doanh thu ghi nhận']
+  ecom_fee int [note: 'phí sàn']
+  indexes {
+    (order_id, order_type) [pk]
+  }
+  note: 'Dòng trả dùng lại order_id của đơn gốc. Đơn gốc và dòng trả của nó = cùng order_id, khác order_type. Quan hệ này không vẽ được bằng khóa ngoại'
+}
+
+Table orders_raw_products {
+  order_id int [not null]
+  order_type varchar [not null]
+  code varchar [not null]
+  quantity int 
+  price int 
+  discount int 
+  amount int 
+  Note: 'mảng lồng trong orders_raw, không phải bảng thật'
+}
+
+Ref: orders_raw_products.(order_id, order_type) > orders_raw.(order_id, order_type)
+
+Ref: orders_raw.depot_id > depots.id 
+
+Ref: orders_raw.customer_id > nhanh_customers_full.id
+
+Ref: orders_raw_products.code > nhanh_products_full.code
+
+Table depot_id_mapping {
+  code varchar [pk, note: 'mã cửa hàng/kho, VD STORE_HN_01']
+  name varchar
+  old_depot_id int [note: 'ID kho cũ trước khi đổi hệ thống']
+  new_depot_id int [unique, not null]
+  Note: 'mô phỏng đổi mã kho cũ → mới'
+}
+
+Table store_mapping {
+  palexy_store_name varchar [pk, note: 'tên cửa hàng trong Palexy']
+  correct_store_code varchar [unique, not null]
+  correct_store_name varchar
+  Note: 'chỉ 29 cửa hàng, không có kho'
+}
+
+Table nhanh_bills_full {
+  id int [pk, note: 'từ 8000001']
+  orderId int [note: 'chỉ ở phiếu nhập trả hàng online: order_id của đơn gốc; các phiếu khác = 0. Không vẽ Ref vì orders_raw có khóa ghép (order_id, order_type)']
+  depotId int [not null]
+  date date
+  type int [note: '2 = xuất, 1 = nhập']
+  mode int [note: '2 = bán lẻ, 3 = chuyển kho, 5 = nhà cung cấp (hệ thống thật có 8 giá trị; phiếu nhập trả online trong dữ liệu ghi 2, hệ thống thật là 1 = giao hàng)']
+  description varchar [note: 'phiếu nhập trả online: Restockable / Damaged']
+  customerId int
+  saleId varchar
+  supplierId int
+  paymentAmount int
+  Note: '4 loại phiếu: bản sao phiếu bills_raw, nhập trả online, chuyển kho, nhập NCC. Không cộng với bills_raw (đếm trùng doanh thu). Cột lược bỏ: customerName, customerMobile, createdById, createdByName, createdAt, saleName, supplierName, paymentDiscount, paymentTransferAmount, paymentCashAmount, paymentCouponCode, paymentCouponAmount, products[], _loaded_at, _batch_id'
+}
+
+Table daily_snapshot {
+  snapshot_date date
+  snapshot_time timestamp
+  product_id varchar [not null, note: 'thực chất là MÃ SKU (code), không phải id']
+  parent_product_code varchar
+  parent_product_name varchar
+  product_name varchar
+  warehouse_code varchar [not null, note: 'mã cửa hàng/kho (depots.code)']
+  quantity int [note: 'tồn tại ngày chụp']
+  unit_price int
+  cost_price int
+  import_price int
+  indexes {
+    (snapshot_date, warehouse_code, product_id) [pk]
+  }
+  Note: 'chụp 7 ngày/lần; chỉ một nhóm cố định ~400 SKU; tồn dựng ngược từ hàng đã bán'
+}
+
+Table health_check_log {
+  check_date date [pk]
+  total_products int
+  total_warehouses int
+  total_quantity int
+  total_quantity_yesterday int
+  "change" int
+  change_percent float
+  quantity_status varchar [note: 'ABNORMAL nếu |change_percent| > 15']
+  warehouse_status varchar
+  change_status varchar [note: 'INCREASE / DECREASE']
+  Note: 'tổng hợp từ daily_snapshot, không có khóa ngoại'
+}
+
+Table v_daily_summary {
+  snapshot_date date [pk]
+  total_products int
+  total_warehouses int
+  total_quantity int
+  products_in_stock int
+  products_out_of_stock int
+  total_inventory_value int
+  Note: 'tổng hợp từ daily_snapshot, không có khóa ngoại'
+}
+
+Table daily_visits_v2 {
+  snapshot_date date
+  snapshot_timestamp timestamp
+  store_id varchar [note: 'ID cửa hàng theo Palexy (trong dữ liệu = depots.id dạng chữ); không dùng để nối']
+  store_code varchar [not null]
+  store_name varchar
+  unique_visits int [note: 'lượt khách duy nhất trong ngày (1 khách ra vào nhiều lần chỉ tính 1)']
+  loaded_at timestamp
+  indexes {
+    (snapshot_date, store_code) [pk]
+  }
+  Note: 'chỉ có ngày cửa hàng có hóa đơn'
+}
+
+Table hourly_traffic {
+  snapshot_date date
+  snapshot_hour int [note: '9–21']
+  snapshot_timestamp timestamp
+  store_id varchar [note: 'như daily_visits_v2']
+  store_code varchar [not null]
+  store_name varchar
+  visits int [note: 'tổng theo giờ cao hơn unique_visits 15–38% vì khách ra vào nhiều lần']
+  loaded_at timestamp
+  indexes {
+    (snapshot_date, snapshot_hour, store_code) [pk]
+  }
+}
+
+TableGroup shop_data {
+  depots
+  depot_id_mapping
+}
+
+TableGroup product_data {
+  nhanh_categories 
+  nhanh_internal_categories 
+  nhanh_products_full}
+
+TableGroup customer_data {
+  nhanh_customers_full
+  t_customer_tier_final
+}
+
+TableGroup retail_data {
+  employees
+  work_schedule
+  bills_raw 
+  bills_raw_products
+}
+
+TableGroup order_data {
+  orders_raw 
+  orders_raw_products
+}
+
+TableGroup bill_data {
+  nhanh_bills_full
+}
+
+TableGroup inventory_data {
+  daily_snapshot 
+  health_check_log 
+  v_daily_summary
+}
+
+TableGroup palexy_data {
+  store_mapping 
+  hourly_traffic 
+  daily_visits_v2
+}
+Ref: depot_id_mapping.new_depot_id - depots.id
+Ref: store_mapping.correct_store_code - depots.code
+Ref: nhanh_bills_full.depotId > depots.id
+Ref: daily_snapshot.warehouse_code > depots.code
+Ref: daily_snapshot.product_id > nhanh_products_full.code
+Ref: daily_visits_v2.store_code > depots.code
+Ref: hourly_traffic.store_code > depots.code

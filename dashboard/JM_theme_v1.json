@@ -1,0 +1,71 @@
+{
+  "name": "JM Hồng v1",
+  "dataColors": ["#8E2F4E", "#E3A8BC", "#D4778F", "#B84E6E", "#F2D3DD", "#A0A0A0", "#1A1A1A", "#6E6E6E"],
+  "background": "#FFFFFF",
+  "foreground": "#1A1A1A",
+  "tableAccent": "#8E2F4E",
+  "good": "#2F6E5A",
+  "bad": "#B3243F",
+  "neutral": "#6E6E6E",
+  "maximum": "#8E2F4E",
+  "center": "#D4778F",
+  "minimum": "#F2D3DD",
+  "textClasses": {
+    "callout": { "fontFace": "Segoe UI Semibold", "fontSize": 24, "color": "#1A1A1A" },
+    "title":   { "fontFace": "Segoe UI Semibold", "fontSize": 11, "color": "#1A1A1A" },
+    "header":  { "fontFace": "Segoe UI Semibold", "fontSize": 11, "color": "#1A1A1A" },
+    "label":   { "fontFace": "Segoe UI", "fontSize": 9, "color": "#1A1A1A" }
+  },
+  "visualStyles": {
+    "page": {
+      "*": {
+        "background": [ { "color": { "solid": { "color": "#F9E3E9" } }, "transparency": 0 } ],
+        "outspace":   [ { "color": { "solid": { "color": "#F9E3E9" } }, "transparency": 0 } ]
+      }
+    },
+    "*": {
+      "*": {
+        "title": [ { "show": true, "fontColor": { "solid": { "color": "#1A1A1A" } }, "fontSize": 11, "fontFamily": "Segoe UI Semibold", "alignment": "left" } ],
+        "background": [ { "show": true, "color": { "solid": { "color": "#FFFFFF" } }, "transparency": 0 } ],
+        "border": [ { "show": true, "color": { "solid": { "color": "#DEDCDA" } }, "radius": 4 } ],
+        "dropShadow": [ { "show": false } ],
+        "labels": [ { "color": { "solid": { "color": "#1A1A1A" } }, "fontSize": 9, "labelDisplayUnits": 1 } ],
+        "categoryAxis": [ { "showAxisTitle": false, "fontSize": 9, "labelColor": { "solid": { "color": "#6E6E6E" } }, "gridlineShow": false } ],
+        "valueAxis": [ { "showAxisTitle": false, "fontSize": 9, "labelColor": { "solid": { "color": "#6E6E6E" } }, "gridlineColor": { "solid": { "color": "#DEDCDA" } } } ],
+        "legend": [ { "showTitle": false, "position": "TopLeft", "fontSize": 9, "labelColor": { "solid": { "color": "#6E6E6E" } } } ]
+      }
+    },
+    "waterfallChart": {
+      "*": {
+        "sentimentColors": [ {
+          "increaseFill": { "solid": { "color": "#D4778F" } },
+          "decreaseFill": { "solid": { "color": "#E3A8BC" } },
+          "totalFill":    { "solid": { "color": "#8E2F4E" } }
+        } ],
+        "legend": [ { "show": false } ],
+        "valueAxis": [ { "show": false, "gridlineShow": false } ]
+      }
+    },
+    "slicer": {
+      "*": {
+        "items":  [ { "fontSize": 9, "fontColor": { "solid": { "color": "#1A1A1A" } } } ],
+        "header": [ { "fontSize": 9, "fontColor": { "solid": { "color": "#6E6E6E" } } } ]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "grid": [ { "gridHorizontalColor": { "solid": { "color": "#DEDCDA" } }, "gridVertical": false } ],
+        "columnHeaders": [ { "fontSize": 9, "fontColor": { "solid": { "color": "#6E6E6E" } } } ],
+        "values": [ { "fontSize": 9 } ]
+      }
+    },
+    "pivotTable": {
+      "*": {
+        "grid": [ { "gridHorizontalColor": { "solid": { "color": "#DEDCDA" } }, "gridVertical": false } ],
+        "columnHeaders": [ { "fontSize": 9, "fontColor": { "solid": { "color": "#6E6E6E" } } } ],
+        "rowHeaders": [ { "fontSize": 9 } ],
+        "values": [ { "fontSize": 9 } ]
+      }
+    }
+  }
+}

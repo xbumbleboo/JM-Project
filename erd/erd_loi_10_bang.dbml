@@ -1,0 +1,144 @@
+// ERD lõi — 10 bảng dùng trong phân tích (JM Synthetic Data, generator v3.1)
+// Bản đầy đủ 18 bảng: erd_day_du_18_bang.dbml
+
+Table depots {
+  id int [pk, note: '1001–1032: 29 cửa hàng + 3 kho']
+  code varchar [unique, note: 'VD STORE_HN_01']
+  name varchar
+  city_name varchar
+  store_format varchar [note: 'TTTM / Mặt phố / Kho']
+  location_type varchar [note: 'Trung tâm / Ven đô / Kho']
+}
+
+Table nhanh_categories {
+  id int [pk, note: '101–107 (7 dòng hàng)']
+  code varchar
+  name varchar
+}
+
+Table nhanh_internal_categories {
+  id int [pk, note: '201–220 (20 BST)']
+  code varchar
+  name varchar
+}
+
+Table nhanh_products_full {
+  id int [pk]
+  code varchar [unique, note: 'VD 4A66.2473-DE-M; mã SP cha = phần trước dấu - đầu tiên']
+  name varchar
+  category_id int [not null]
+  internal_category_id int [not null]
+  status varchar [note: 'Active / Inactive']
+  "prices.retail" int [note: 'Giá niêm yết là giá năm 2024, chưa tính tăng giá 9%/năm']
+  "prices.avg_cost" int [note: 'giá vốn']
+}
+
+Table nhanh_customers_full {
+  id int [pk, note: '1, 2, 3 = tài khoản dùng chung (PHÒNG NHÂN SỰ, KHÁCH LẺ, KHÁCH NƯỚC NGOÀI); khách thật từ 100001']
+  name varchar
+  mobile varchar
+  membership_tier varchar [note: 'hạng thẻ: chi tiêu offline 365 ngày']
+  points int
+  startedDate date
+  totalAmount int
+  frequencyBought int
+  daysNotBought int
+}
+
+Table t_customer_tier_final {
+  customer_id int [pk]
+  Potential_Tier varchar
+  Activity_Status varchar
+  Final_Tier varchar [note: 'phân hạng khách theo hai kênh; tách biệt với hạng thẻ']
+}
+
+Table bills_raw {
+  bill_id int [pk]
+  bill_type int [note: '2 = phiếu bán, 1 = phiếu trả']
+  bill_date date
+  depot_id int [not null]
+  customer_id int [not null]
+  sale_user_id varchar [note: 'mã nhân viên; không dùng trong phân tích']
+  related_type int [note: '6 = phiếu trả có hóa đơn gốc, 0 = không có']
+  related_bill_id int [unique, note: 'chỉ có ở phiếu trả: trỏ về hóa đơn gốc']
+  related_parent_id int [unique, note: 'chỉ có ở hóa đơn đổi: trỏ về phiếu trả']
+  payment_amount int
+  payment_points int
+  payment_return_fee int
+}
+
+Table bills_raw_products {
+  bill_id int [not null]
+  code varchar [not null]
+  quantity int
+  price int
+  discount int
+  amount int
+  Note: 'mảng lồng trong bills_raw, không phải bảng thật'
+}
+
+Table orders_raw {
+  order_id int [not null, note: 'không duy nhất: dòng trả dùng lại order_id của đơn gốc']
+  order_type varchar [note: 'Giao hàng tận nhà = đơn gốc; Khách trả lại hàng = dòng trả']
+  status varchar [note: '8 giá trị: Thành công, Khách hủy, Hệ thống hủy, Hết hàng, Thất bại, Đang chuyển hoàn, Đã chuyển hoàn, Xác nhận hoàn']
+  sale_channel varchar [note: '7 sàn']
+  created_at timestamp
+  depot_id int [not null, note: 'cửa hàng xử lý đơn']
+  customer_id int [not null, note: 'không bao giờ là 1, 2, 3']
+  reason int [note: '1–26 = lý do hủy; 31–35 = lý do trả; 0 = không có. Không lọc reason != 0 để lấy một loại']
+  cod_amount int [note: 'dòng trả mang số âm']
+  business_payment int [note: 'doanh thu ghi nhận']
+  ecom_fee int [note: 'phí sàn']
+  indexes {
+    (order_id, order_type) [pk]
+  }
+  Note: 'Đơn gốc và dòng trả của nó = cùng order_id, khác order_type. Quan hệ này không vẽ được bằng khóa ngoại'
+}
+
+Table orders_raw_products {
+  order_id int [not null]
+  order_type varchar [not null]
+  code varchar [not null]
+  quantity int
+  price int
+  discount int
+  amount int
+  Note: 'mảng lồng trong orders_raw, không phải bảng thật'
+}
+
+Ref: nhanh_products_full.category_id > nhanh_categories.id
+Ref: nhanh_products_full.internal_category_id > nhanh_internal_categories.id
+Ref: t_customer_tier_final.customer_id - nhanh_customers_full.id
+
+Ref: bills_raw.depot_id > depots.id
+Ref: bills_raw.customer_id > nhanh_customers_full.id
+Ref: bills_raw_products.bill_id > bills_raw.bill_id
+Ref: bills_raw_products.code > nhanh_products_full.code
+Ref: bills_raw.related_bill_id -? bills_raw.bill_id
+Ref: bills_raw.related_parent_id -? bills_raw.bill_id
+
+Ref: orders_raw.depot_id > depots.id
+Ref: orders_raw.customer_id > nhanh_customers_full.id
+Ref: orders_raw_products.(order_id, order_type) > orders_raw.(order_id, order_type)
+Ref: orders_raw_products.code > nhanh_products_full.code
+
+TableGroup shop_data {
+  depots
+}
+TableGroup product_data {
+  nhanh_products_full
+  nhanh_categories
+  nhanh_internal_categories
+}
+TableGroup customer_data {
+  nhanh_customers_full
+  t_customer_tier_final
+}
+TableGroup retail_data {
+  bills_raw
+  bills_raw_products
+}
+TableGroup order_data {
+  orders_raw
+  orders_raw_products
+}

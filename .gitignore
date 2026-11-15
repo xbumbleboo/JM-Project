@@ -1,0 +1,7 @@
+# Output của generator và script (sinh lại được)
+jm_synthetic_data_v2/
+clv_output.csv
+promo_uplift.csv
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
