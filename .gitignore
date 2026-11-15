@@ -5,3 +5,7 @@ promo_uplift.csv
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Windows
+desktop.ini
+Thumbs.db
